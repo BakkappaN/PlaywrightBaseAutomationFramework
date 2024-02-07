@@ -38,7 +38,7 @@ module.exports = defineConfig({
     // video, screenshot, headless mode
     video:'on',
     screenshot: 'on',
-    headless : false,
+    headless : true,
 
     // custom attribute
     testIdAttribute: 'autocomplete',
