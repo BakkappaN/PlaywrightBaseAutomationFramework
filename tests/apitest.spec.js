@@ -7,63 +7,71 @@ test.use({
   baseURL: process.env.API_BASE_URI.toString()
 })
 
-test("End to End api test in playwright", async ({ request }) => {
-  // create post api request using playwright
-  const postAPIResponse = await request.post("/booking", {
-    data: postRequest,
+test("End to End API testing using playwright", async ({ request }) => {
+
+  const tokenNo = null;
+
+  const postAPIResponse = await test.step('Create booking', async () => {
+    return await request.post("/booking", {
+      data: postRequest,
+    });
   });
 
   const bookingId = await postAPIResponse.json();
   const bId = bookingId.bookingid;
 
-  // create GET api request using playwright
-  const getAPIResponse = await request.get("/booking/", {
-    params: {
-      firstname: "testers talk playwright",
-      lastname: "testers talk api testing",
-    },
+  let getAPIResponse = await test.step('Get booking details', async () => {
+    return await request.get("/booking/", {
+      params: {
+        firstname: "testers talk playwright",
+        lastname: "testers talk api testing",
+      },
+    });
   });
 
-  // validate status code
-  console.log(await getAPIResponse.json());
-  expect(getAPIResponse.ok()).toBeTruthy();
-  expect(getAPIResponse.status()).toBe(200);
-
-  // generate token
-  const tokenAPIResponse = await request.post("/auth", {
-    data: tokenRequest,
-  });
-  expect(tokenAPIResponse.ok()).toBeTruthy();
-  expect(tokenAPIResponse.status()).toBe(200);
-
-  console.log(await tokenAPIResponse.json());
-  const tokenResponseBody = await tokenAPIResponse.json();
-  const tokenNo = tokenResponseBody.token;
-
-  // partial update booking details
-  const patchAPIResponse = await request.patch(`/booking/${bId}`, {
-    headers: {
-      "Content-Type": "application/json",
-      Cookie: `token=${tokenNo}`,
-    },
-    data: {
-      firstname: "testers talk postman",
-      lastname: "testers talk rest assured",
-    },
+  await test.step('Validate status code', async () => {
+    console.log(await getAPIResponse.json());
+    expect(getAPIResponse.ok()).toBeTruthy();
+    expect(getAPIResponse.status()).toBe(200);
   });
 
-  console.log(await patchAPIResponse.json());
-  expect(patchAPIResponse.ok()).toBeTruthy();
-  expect(patchAPIResponse.status()).toBe(200);
+  const tokenAPIResponse = await test.step('Generate token & Validate status code', async () => {
+    return await request.post("/auth", {
+      data: tokenRequest,
+    });
+    expect(tokenAPIResponse.ok()).toBeTruthy();
+    expect(tokenAPIResponse.status()).toBe(200);
 
-  // DELETE api request
-  // partial update booking details
-  const deleteAPIResponse = await request.delete(`/booking/${bId}`, {
-    headers: {
-      "Content-Type": "application/json",
-      "Cookie": `token=${tokenNo}`,
-    },
+    console.log(await tokenAPIResponse.json());
+    const tokenResponseBody = await tokenAPIResponse.json();
+    tokenNo = tokenResponseBody.token;
   });
-  expect(deleteAPIResponse.status()).toBe(201);
-  expect(deleteAPIResponse.statusText()).toBe("Created");
+
+  const patchAPIResponse = await test.step('Partial update booking details & Validate status code', async () => {
+    return await request.patch(`/booking/${bId}`, {
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: `token=${tokenNo}`,
+      },
+      data: {
+        firstname: "testers talk postman",
+        lastname: "testers talk rest assured",
+      },
+    });
+
+    console.log(await patchAPIResponse.json());
+    expect(patchAPIResponse.ok()).toBeTruthy();
+    expect(patchAPIResponse.status()).toBe(200);
+  });
+
+  const deleteAPIResponse = await test.step('Delete booking & Validate status code', async () => {
+    return await request.delete(`/booking/${bId}`, {
+      headers: {
+        "Content-Type": "application/json",
+        "Cookie": `token=${tokenNo}`,
+      },
+    });
+    expect(deleteAPIResponse.status()).toBe(201);
+    expect(deleteAPIResponse.statusText()).toBe("Created");
+  });
 });
